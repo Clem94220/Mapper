@@ -1,0 +1,10 @@
+^C:\USERS\CLEM\DOCUMENTS\MAPPER\BUILD\CMAKEFILES\2B96C70E721C4F4143CBCCE0077D2D41\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/clem/Documents/Mapper -BC:/Users/clem/Documents/Mapper/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/clem/Documents/Mapper/build/NullMapper.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

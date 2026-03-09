@@ -1,0 +1,53 @@
+# Implementation Plan - Null.sys Hijack Driver & Mapper
+
+This project aims to create a kernel driver that, when manually mapped, hijacks the `Null.sys` driver by replacing its dispatch table. This allows the driver to execute code whenever `Null.sys` is called (e.g., via IOCTLs).
+
+## User Review Required
+
+> [!WARNING]
+> Manual mapping into kernel memory requires a way to bypass Driver Signature Enforcement (DSE). This plan assumes the use of a vulnerable driver or a system with DSE disabled for testing.
+> Hijacking system drivers can cause system instability or Blue Screen of Death (BSOD) if not handled carefully.
+
+## Proposed Changes
+
+### Kernel Driver (`Driver/`)
+The driver will be designed to be "Reflective" (manual map compatible).
+
+#### [NEW] [main.c](file:///c:/Users/clem/Documents/Mapper/Driver/main.c)
+- `DriverEntry`: Entry point called by the mapper. It will not use standard Windows loading.
+- `HijackNull`: 
+    - Use `IoGetDeviceObjectPointer` or `ObReferenceObjectByName` to get `\Driver\Null`.
+    - Access the `DRIVER_OBJECT` structure.
+    - Backup `MajorFunction[IRP_MJ_DEVICE_CONTROL]`.
+    - Set `MajorFunction[IRP_MJ_DEVICE_CONTROL]` to our `HookedDeviceControl`.
+- `HookedDeviceControl`: 
+    - Check the `IoControlCode`.
+    - If it matches our custom code, perform the desired action.
+    - Otherwise, call the original `Null.sys` handler.
+
+### Manual Mapper (`Mapper/`)
+A user-mode application to load the driver.
+
+#### [NEW] [mapper.cpp](file:///c:/Users/clem/Documents/Mapper/Mapper/mapper.cpp)
+- `main`: Orchestrates the mapping.
+- `MapDriver`: 
+    - Reads the driver binary.
+    - Allocates kernel memory (using a vulnerable driver driver or similar mechanism).
+    - Resolves relocations.
+    - Resolves imports (mapping `ntoskrnl.exe` exports).
+    - Calls the driver's entry point.
+
+> [!NOTE]
+> For the mapper, I will provide a structure that uses a placeholder for the kernel R/W primitive, as the specific method of kernel access (Vulnerable Driver, CVE, etc.) depends on the user's environment.
+
+## Verification Plan
+
+### Automated Tests
+- None (Kernel development requires manual testing and debugging).
+
+### Manual Verification
+1. Load the mapper.
+2. Mapper loads the driver into kernel memory.
+3. Driver hijacks `Null.sys`.
+4. Send an IOCTL to `\\.\Null` using a small testing utility or `DeviceIoControl`.
+5. Check `DbgView` for logs from the hijacked driver.
